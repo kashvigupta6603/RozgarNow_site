@@ -1,0 +1,21 @@
+[phases.setup]
+aptPkgs = [
+    "libgtk-3-0",
+    "libnotify-dev",
+    "libgconf-2-4",
+    "libnss3",
+    "libxss1",
+    "libasound2",
+    "libpangocairo-1.0-0",
+    "libgdk-pixbuf2.0-0",
+    "libxcursor1",
+    "libxrandr2",
+    "libxcomposite1",
+    "libxi6",
+    "libxtst6",
+    "libcups2",
+    "libxrandr2",
+    "wget",
+    "xdg-utils",
+    "libgbm1" # Sometimes required for newer Chromium versions
+]
