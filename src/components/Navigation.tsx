@@ -93,8 +93,8 @@ useEffect(() => {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/alerts/trigger-one", {
-        method: "GET",
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/alerts/trigger-one`, {
+
         headers: {
           Authorization: `Bearer ${token}`,
         },

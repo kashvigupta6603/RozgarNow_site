@@ -41,7 +41,7 @@ const AdminUsers = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch("http://localhost:4000/api/admin/users", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`, // FIXED
         },

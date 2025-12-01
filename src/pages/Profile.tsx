@@ -50,7 +50,7 @@ const Profile = () => {
   useEffect(() => {
     if (!token) return;
 
-    fetch("http://localhost:4000/api/auth/me", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -62,7 +62,7 @@ const Profile = () => {
         }));
       });
 
-    fetch("http://localhost:4000/api/preferences/get", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/preferences/get`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -111,7 +111,7 @@ const Profile = () => {
       keywords: formData.keywords,
     };
 
-    const res = await fetch("http://localhost:4000/api/preferences/set", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/preferences/set`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

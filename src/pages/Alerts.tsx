@@ -101,7 +101,7 @@ const Alerts = () => {
   e.preventDefault();
 
   try {
-    const res = await fetch("http://localhost:4000/api/alerts/subscribe", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/alerts/subscribe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

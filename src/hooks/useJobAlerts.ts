@@ -7,7 +7,7 @@ export function useJobAlerts() {
 
   async function checkJobs() {
     try {
-      const res = await fetch("http://localhost:4000/api/jobs/matching", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/jobs/matching`, {
         credentials: "include",
       });
       const data = await res.json();

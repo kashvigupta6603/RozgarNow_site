@@ -1,4 +1,3 @@
-
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
@@ -11,15 +10,17 @@ import fetch from "node-fetch";
 import alertRoutes from "./routes/alertRoutes";
 import adminRoutes from "./routes/adminRoutes";
 
-
 import { sendAlertsToAllUsers } from "./controllers/notificationController";
 
-
 const app = express();
-app.use(cors({
-  origin: "http://localhost:8080",
-  credentials: true,
-}));
+
+// 🤝 PRODUCTION CORS WITH FRONTEND URL
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "*",
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -28,17 +29,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Route setup
+// ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/preferences", preferenceRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/alerts", alertRoutes);
-app.use("/api/admin", adminRoutes); 
 app.use("/api/admin", adminRoutes);
 
-
-
-// schedule: every 6 hours at minute 0
+// 🔔 Alert Cron
 cron.schedule("0 */6 * * *", async () => {
   console.log("🔁 Cron: running sendAlertsToAllUsers");
   try {
@@ -49,25 +47,28 @@ cron.schedule("0 */6 * * *", async () => {
   }
 });
 
-
-// ✅ Root route
+// Root
 app.get("/", (req, res) => {
   res.send("Backend Running ✅");
 });
 
-// ✅ Start server
-app.listen(4000, () => {
-  console.log("Server running on http://localhost:4000");
+// 🚀 Start Server
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on PORT ${PORT}`);
 });
 
-// ✅ Scheduled job: auto-fetch new data every 6 hours
+// ⏳ Cron Fetch Jobs Every 6 Hours
 cron.schedule("0 */6 * * *", async () => {
   try {
     console.log("🚀 Scheduled fetch: starting");
+
     await fetch(
-      `${process.env.SERVER_URL || "http://localhost:4000"}/api/jobs/fetch`,
+      `${process.env.SERVER_URL || `http://localhost:${PORT}`}/api/jobs/fetch`,
       { method: "POST" }
     );
+
     console.log("✅ Scheduled fetch: done");
   } catch (err) {
     console.error("Scheduled fetch failed:", err);
