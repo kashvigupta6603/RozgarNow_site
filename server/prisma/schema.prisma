@@ -1,7 +1,8 @@
-// database provider
+// server/prisma/schema.prisma
+
 generator client {
-  provider = "prisma-client"        // ✅ Prisma 7 generator
-  output   = "../generated/prisma"  // ✅ where the client will be generated
+  provider = "prisma-client-js" // Changed to be more explicit
+  output   = "./generated/prisma" // ⬅️ FIX: Changed to a local path
 }
 
 datasource db {
