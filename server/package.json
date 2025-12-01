@@ -1,11 +1,16 @@
 {
+
   "name": "server",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "src/index.ts",  
+  "engines": {            
+    "node": ">=21.7.0" 
+  },                       
   "scripts": {
     "dev": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" src/index.ts",
     "build": "tsc"
   },
+
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "axios": "^1.13.2",
