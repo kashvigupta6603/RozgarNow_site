@@ -6,11 +6,20 @@ import path from "path";
 export default defineConfig({
   server: {
     host: "::",
-    port: 8080,
+    port: 8080, // local dev only
   },
+
+  preview: {
+    port: 4173, // Railway will use this port
+    allowedHosts: [
+      "rozgarnowsite-production-bdb2.up.railway.app", // <-- YOUR FRONTEND RAILWAY DOMAIN
+    ],
+  },
+
   plugins: [
-    react(), // ✅ only React
+    react(), // React plugin
   ],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
