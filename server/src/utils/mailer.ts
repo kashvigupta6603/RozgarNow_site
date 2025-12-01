@@ -1,15 +1,16 @@
-// src/utils/mailer.ts
 import nodemailer from "nodemailer";
 
 export const mailer = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER,      // e.g. RozgarNow.app@gmail.com
-    pass: process.env.EMAIL_PASS       // Gmail App Password (16 digit)
-  }
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
-export const sendMail = async (to: string, subject: string, html: string) => {
+export const sendMail = async (to, subject, html) => {
   try {
     await mailer.sendMail({
       from: `"RozgarNow Job Alerts" <${process.env.EMAIL_USER}>`,
@@ -17,7 +18,6 @@ export const sendMail = async (to: string, subject: string, html: string) => {
       subject,
       html,
     });
-
     console.log("📩 Email sent to:", to);
   } catch (err) {
     console.error("❌ Email failed:", err);
