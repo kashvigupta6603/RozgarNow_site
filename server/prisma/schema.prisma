@@ -1,0 +1,60 @@
+// database provider
+generator client {
+  provider = "prisma-client"        // ✅ Prisma 7 generator
+  output   = "../generated/prisma"  // ✅ where the client will be generated
+}
+
+datasource db {
+  provider = "postgresql"           // ✅ only provider here, NO url, NO output
+}
+
+
+
+// USER TABLE
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  email       String    @unique
+  password    String
+  createdAt   DateTime  @default(now())
+  preferences Preference[]
+  jobs        Job[]
+   isAdmin     Boolean   @default(false)
+}
+
+// USER PREFERENCES
+model Preference {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  age           Int?
+  qualification String?
+  category      String?
+  location      String?   
+  keywords      String?
+  experience    String?
+  govt          String?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+
+// JOBS TABLE
+model Job {
+  id                     Int      @id @default(autoincrement())
+  jobHash                String   @unique
+  title                  String
+  organization           String
+  location               String?
+  deadline               String?
+  qualificationRequired  String?
+  syllabus               String?
+  applyLink              String?
+  age                    Int?
+  experience             String?
+  govt                   String?
+  userId                 Int?
+  vacancies              Int?
+
+  user User? @relation(fields: [userId], references: [id])
+}
+

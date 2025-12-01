@@ -3,99 +3,113 @@ import Footer from "@/components/Footer";
 import JobCard from "@/components/JobCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Search, Filter, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 const Jobs = () => {
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedQualification, setSelectedQualification] = useState("all");
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  // Mock job data
-  const jobs = [
-    {
-      id: "1",
-      title: "Staff Selection Commission - Multi Tasking Staff",
-      organization: "Staff Selection Commission (SSC)",
-      location: "All India",
-      qualification: "10th Pass",
-      applicationDeadline: "2025-02-15",
-      category: "Government",
-      vacancies: 8000,
-      isNew: true
-    },
-    {
-      id: "2", 
-      title: "Railway Protection Force - Constable",
-      organization: "Indian Railways",
-      location: "Pan India",
-      qualification: "12th Pass",
-      applicationDeadline: "2025-02-28",
-      category: "Railway",
-      vacancies: 5000,
-      isNew: true
-    },
-    {
-      id: "3",
-      title: "State Bank of India - Probationary Officer",
-      organization: "State Bank of India",
-      location: "All States",
-      qualification: "Graduate",
-      applicationDeadline: "2025-03-10",
-      category: "Banking",
-      vacancies: 2000,
-      isNew: false
-    },
-    {
-      id: "4",
-      title: "IBPS - Clerk Recruitment",
-      organization: "Institute of Banking Personnel Selection",
-      location: "All India",
-      qualification: "Graduate",
-      applicationDeadline: "2025-03-05",
-      category: "Banking",
-      vacancies: 4000,
-      isNew: false
-    },
-    {
-      id: "5",
-      title: "Delhi Police - Constable",
-      organization: "Delhi Police",
-      location: "Delhi",
-      qualification: "12th Pass",
-      applicationDeadline: "2025-02-20",
-      category: "Police",
-      vacancies: 25000,
-      isNew: true
-    },
-    {
-      id: "6",
-      title: "UPSC - Civil Services Examination",
-      organization: "Union Public Service Commission",
-      location: "All India",
-      qualification: "Graduate",
-      applicationDeadline: "2025-03-15",
-      category: "Civil Services",
-      vacancies: 900,
-      isNew: false
+  // ==============================
+  // Fetch Jobs
+  // ==============================
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/jobs/all");
+        const data = await res.json();
+
+        if (data.success && data.jobs) {
+          const cleanedJobs = data.jobs.map((job: any) => ({
+            ...job,
+            location: cleanLocation(job.location),
+            deadline: cleanDate(job.deadline),
+          }));
+
+          setJobs(cleanedJobs);
+        } else {
+          toast.error("Failed to fetch jobs");
+        }
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+        toast.error("Backend connection error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadJobs();
+  }, []);
+
+  // ==============================
+  // CLEAN LOCATION
+  // ==============================
+  const cleanLocation = (loc: string | null) => {
+    if (!loc) return "Not specified";
+
+    try {
+      const parsed = JSON.parse(loc);
+      if (Array.isArray(parsed) && parsed.length && parsed[0] !== "") {
+        return parsed.join(", ");
+      }
+    } catch {
+      // Not JSON
     }
-  ];
 
-  const categories = ["All", "Government", "Railway", "Banking", "Police", "Civil Services", "Teaching", "Defense"];
-  const locations = ["All", "All India", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Pan India"];
+    return loc.replace(/[\[\]\\"]/g, "").trim() || "Not specified";
+  };
+
+  // ==============================
+  // CLEAN DATE  (Fixed Template String Bug)
+  // ==============================
+  const cleanDate = (d: string | null) => {
+    if (!d) return "";
+
+    const parts = d.split("-");
+    if (parts.length === 3) {
+      // "DD-MM-YYYY" ➝ "YYYY-MM-DD"
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return d;
+  };
+
+  // Dropdown Options
+  const categories = ["All", "Government", "Railway", "Banking", "Police", "Teaching", "Defense"];
+  const locations = ["All", "Punjab", "Delhi", "Chandigarh", "Mumbai", "Pan India"];
   const qualifications = ["All", "10th Pass", "12th Pass", "Graduate", "Post Graduate"];
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.organization.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || job.category.toLowerCase() === selectedCategory.toLowerCase();
-    const matchesLocation = selectedLocation === "all" || job.location.toLowerCase().includes(selectedLocation.toLowerCase());
-    const matchesQualification = selectedQualification === "all" || job.qualification.toLowerCase() === selectedQualification.toLowerCase();
-    
+  // ==============================
+  // FILTERING LOGIC
+  // ==============================
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.organization?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === "all" ||
+      job.govt?.toLowerCase().includes(selectedCategory.toLowerCase());
+
+    const matchesLocation =
+      selectedLocation === "all" ||
+      job.location?.toLowerCase().includes(selectedLocation.toLowerCase());
+
+    const matchesQualification =
+      selectedQualification === "all" ||
+      job.qualificationRequired?.toLowerCase().includes(selectedQualification.toLowerCase());
+
     return matchesSearch && matchesCategory && matchesLocation && matchesQualification;
   });
 
@@ -103,140 +117,115 @@ const Jobs = () => {
     setSelectedCategory("all");
     setSelectedLocation("all");
     setSelectedQualification("all");
-    setActiveFilters([]);
+    setSearchTerm("");
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
-      {/* Header */}
+
+      {/* HERO */}
       <div className="bg-gradient-hero py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary-foreground mb-4">
-              Government Job Listings
-            </h1>
-            <p className="text-xl text-primary-foreground/90">
-              Find your dream government job from thousands of opportunities
-            </p>
-          </div>
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h1 className="text-4xl font-bold text-white mb-4">Government Job Listings</h1>
+          <p className="text-lg text-gray-100">Find verified live updates from trusted sources</p>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-background shadow-soft border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search jobs, organizations, or keywords..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-3 text-lg"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category.toLowerCase()}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location} value={location.toLowerCase()}>
-                      {location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedQualification} onValueChange={setSelectedQualification}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Qualification" />
-                </SelectTrigger>
-                <SelectContent>
-                  {qualifications.map((qualification) => (
-                    <SelectItem key={qualification} value={qualification.toLowerCase()}>
-                      {qualification}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {(selectedCategory !== "all" || selectedLocation !== "all" || selectedQualification !== "all") && (
-                <Button variant="outline" onClick={clearFilters} size="sm">
-                  <X className="h-4 w-4 mr-2" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-
-            {/* Active Filters */}
-            {activeFilters.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {activeFilters.map((filter, index) => (
-                  <Badge key={index} variant="secondary" className="px-3 py-1">
-                    {filter}
-                    <X className="h-3 w-3 ml-2 cursor-pointer" />
-                  </Badge>
-                ))}
-              </div>
-            )}
+      {/* Search + Filters */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
+          {/* Search Bar */}
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-3 text-gray-500" />
+            <Input
+              placeholder="Search jobs, organizations, or keywords..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </div>
-      </div>
 
-      {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-foreground">
-            {filteredJobs.length} Jobs Found
-          </h2>
-          <Select defaultValue="newest">
+          {/* Category */}
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="deadline">Deadline</SelectItem>
-              <SelectItem value="vacancies">Most Vacancies</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category.toLowerCase()}>
+                  {category}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
+          {/* Location */}
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations.map((loc) => (
+                <SelectItem key={loc} value={loc.toLowerCase()}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Qualification */}
+          <Select value={selectedQualification} onValueChange={setSelectedQualification}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Qualification" />
+            </SelectTrigger>
+            <SelectContent>
+              {qualifications.map((q) => (
+                <SelectItem key={q} value={q.toLowerCase()}>
+                  {q}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Clear Filters */}
+          {(selectedCategory !== "all" ||
+            selectedLocation !== "all" ||
+            selectedQualification !== "all") && (
+            <Button variant="outline" onClick={clearFilters}>
+              <X className="h-4 w-4 mr-2" />
+              Clear Filters
+            </Button>
+          )}
         </div>
 
-        {/* Job Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredJobs.map((job) => (
-            <JobCard key={job.id} {...job} />
-          ))}
-        </div>
-
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-muted-foreground mb-4">
-              <Filter className="h-12 w-12 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold">No jobs found</h3>
-              <p className="mt-2">Try adjusting your search criteria or filters</p>
-            </div>
-            <Button onClick={clearFilters} variant="outline">
-              Clear all filters
+        {/* JOB GRID */}
+        {loading ? (
+          <p className="text-center text-gray-500 py-10">Loading jobs...</p>
+        ) : filteredJobs.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                id={job.id}
+                title={job.title}
+                organization={job.organization}
+                location={job.location || "N/A"}
+                qualification={job.qualificationRequired || "Not specified"}
+                applicationDeadline={job.deadline || "2025-01-01"}
+                category={job.category || "General"}
+                vacancies={job.vacancies || 1}
+                isNew={true}
+                applyLink={job.applyLink} // IMPORTANT
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 py-12">
+            <Filter className="h-10 w-10 mx-auto mb-3" />
+            <p>No jobs found matching your filters</p>
+            <Button className="mt-3" onClick={clearFilters}>
+              Reset Filters
             </Button>
           </div>
         )}

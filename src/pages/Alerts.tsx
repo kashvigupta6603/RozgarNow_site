@@ -97,11 +97,35 @@ const Alerts = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log({ email, selectedCategories, selectedQualifications, selectedLocations });
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("http://localhost:4000/api/alerts/subscribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        categories: selectedCategories,
+        qualifications: selectedQualifications,
+        locations: selectedLocations,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("🎉 Alerts activated! Check your email.");
+    } else {
+      alert("Failed: " + data.message);
+    }
+  } catch (err) {
+    alert("Request failed");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-background">

@@ -66,6 +66,7 @@ export default {
 				}
 			},
 			backgroundImage: {
+				 'gradient-teal': 'var(--gradient-teal)',
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-card': 'var(--gradient-card)'
@@ -105,4 +106,4 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+} satisfies Config;  
