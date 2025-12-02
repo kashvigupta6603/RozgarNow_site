@@ -1,36 +1,27 @@
 import axios from "axios";
 
-const API_KEY = process.env.BREVO_API_KEY!;
-const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL!;
-const SENDER_NAME = process.env.BREVO_SENDER_NAME!;
-
 export async function sendMail(to: string, subject: string, html: string) {
   try {
-    const response = await axios.post(
+    const res = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
       {
-        sender: {
-          name: SENDER_NAME,
-          email: SENDER_EMAIL,
-        },
+        sender: { name: "RozgarNow", email: process.env.ALERT_FROM },
         to: [{ email: to }],
         subject,
         htmlContent: html,
       },
       {
         headers: {
-          "accept": "application/json",
-          "api-key": API_KEY,
-          "content-type": "application/json",
+          "api-key": process.env.BREVO_API_KEY!,
+          "Content-Type": "application/json",
         },
       }
     );
 
-    console.log("Mail sent ✔", response.data.messageId);
-    return response.data;
-
+    console.log("Mail sent:", res.data);
+    return res.data;
   } catch (err: any) {
-    console.error("❌ Brevo Email Error:", err.response?.data || err);
+    console.error("❌ Brevo Email Error:", err.response?.data || err.message);
     throw new Error("Email failed");
   }
 }
