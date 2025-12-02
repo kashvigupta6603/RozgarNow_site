@@ -9,15 +9,14 @@ import cron from "node-cron";
 import fetch from "node-fetch";
 import alertRoutes from "./routes/alertRoutes";
 import adminRoutes from "./routes/adminRoutes";
-
 import { sendAlertsToAllUsers } from "./controllers/notificationController";
 
 const app = express();
 
-// 🤝 PRODUCTION CORS WITH FRONTEND URL
+// ---------------- CORS FIX ----------------
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "*",
+    origin: process.env.FRONTEND_URL,   // 🚀 your frontend URL from Railway ENV
     credentials: true,
   })
 );
@@ -29,14 +28,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Routes
+// ---------------- ROUTES ----------------
 app.use("/api/auth", authRoutes);
 app.use("/api/preferences", preferenceRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/admin", adminRoutes);
 
-// 🔔 Alert Cron
+// ---------------- ROOT ----------------
+app.get("/", (req, res) => {
+  res.send("Backend Running ✅");
+});
+
+// ---------------- SERVER START ----------------
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on PORT ${PORT}`);
+});
+
+// ---------------- CRON: SEND ALERTS ----------------
 cron.schedule("0 */6 * * *", async () => {
   console.log("🔁 Cron: running sendAlertsToAllUsers");
   try {
@@ -47,30 +58,17 @@ cron.schedule("0 */6 * * *", async () => {
   }
 });
 
-// Root
-app.get("/", (req, res) => {
-  res.send("Backend Running ✅");
-});
-
-// 🚀 Start Server
-const PORT = process.env.PORT || 4000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on PORT ${PORT}`);
-});
-
-// ⏳ Cron Fetch Jobs Every 6 Hours
+// ---------------- CRON: FETCH JOBS ----------------
 cron.schedule("0 */6 * * *", async () => {
   try {
-    console.log("🚀 Scheduled fetch: starting");
+    console.log("🚀 Scheduled fetch started...");
 
-    await fetch(
-      `${process.env.SERVER_URL || `http://localhost:${PORT}`}/api/jobs/fetch`,
-      { method: "POST" }
-    );
+    const BASE_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
 
-    console.log("✅ Scheduled fetch: done");
+    await fetch(`${BASE_URL}/api/jobs/fetch`, { method: "POST" });
+
+    console.log("✅ Scheduled fetch completed");
   } catch (err) {
-    console.error("Scheduled fetch failed:", err);
+    console.error("❌ Scheduled fetch failed:", err);
   }
 });
