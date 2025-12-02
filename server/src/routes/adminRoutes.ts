@@ -36,6 +36,9 @@ async function ensureAdmin(req: Request, res: Response) {
 
   return user;
 }
+router.get("/test", (req, res) => {
+  res.json({ ok: true, msg: "Admin route mounted" });
+});
 
 /* -------------------------------------------------------
    1) Admin Stats (Users, Jobs, Preferences)
