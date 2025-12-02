@@ -16,7 +16,7 @@ router.post("/subscribe", async (req, res) => {
 
   try {
     await sendMail(
-      email,
+      email,  // <-- yeh sahi hai, kyunki upar destructure kiya hai
       "RozgarNow Alerts Subscription Active! 🎉",
       `<p>Thanks for subscribing!<br/>Categories: ${categories?.join(", ")}</p>`
     );
@@ -27,6 +27,7 @@ router.post("/subscribe", async (req, res) => {
     return res.status(500).json({ success: false, message: "Email failed" });
   }
 });
+
 
 /* -------------------- TRIGGER ONE (SEND MATCHED JOBS) -------------------- */
 router.get("/trigger-one", authMiddleware, async (req, res) => {
@@ -43,31 +44,26 @@ router.get("/trigger-one", authMiddleware, async (req, res) => {
     }
 
     const pref = user.preferences[0];
-    const matchedJobs = await findMatchedJobsForPref(pref);
+    const matched = await findMatchedJobsForPref(pref);
 
-    if (!matchedJobs.length) {
+    if (!matched.length) {
       return res.json({ success: false, message: "No matched jobs now" });
     }
 
-    const htmlList = matchedJobs
-      .slice(0, 5)
-      .map(
-        (job) => `
-        <div style="margin-bottom:10px">
-          <strong>${job.title}</strong><br/>
-          ${job.organization}<br/>
-          ${job.location}<br/>
-          Deadline: ${job.deadline}<br/>
-          <a href="${job.applyLink}" target="_blank">Apply</a>
-        </div>
-      `
-      )
-      .join("");
+    const topJobs = matched.slice(0, 5).map(j => `
+      <p>
+        <strong>${j.title}</strong><br/>
+        ${j.organization}<br/>
+        ${j.location}<br/>
+        Deadline: ${j.deadline}<br/>
+        <a href="${j.applyLink}" target="_blank">Apply</a>
+      </p>
+    `).join("");
 
     await sendMail(
       user.email,
       "Your Matched Jobs — RozgarNow",
-      `<h2>Your Job Matches</h2>${htmlList}`
+      `<h2>Your Job Matches</h2>${topJobs}`
     );
 
     return res.json({ success: true, sent: true });
@@ -76,5 +72,6 @@ router.get("/trigger-one", authMiddleware, async (req, res) => {
     return res.status(500).json({ success: false });
   }
 });
+
 
 export default router;
