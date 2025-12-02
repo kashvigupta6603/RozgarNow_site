@@ -6,30 +6,29 @@ import { findMatchedJobsForPref } from "../controllers/notificationController";
 
 const router = Router();
 
-// ------------------ Subscribe -------------------
+/* -------------------- Subscribe -------------------- */
 router.post("/subscribe", async (req, res) => {
   const { email, categories } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email required" });
+  }
 
   try {
     await sendMail(
       email,
-      "Your Job Alerts Subscription is Active! 🎉",
-      `<p>You are subscribed for job alerts.</p>
-       <p>Categories: ${categories?.join(", ")}</p>`
+      "RozgarNow Alerts Subscription Active! 🎉",
+      `<p>Thanks for subscribing!<br/>Categories: ${categories?.join(", ")}</p>`
     );
 
-    return res.json({ success: true, message: "Subscription email sent" });
-  } catch (err: any) {
-    console.error("Subscribe Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Email failed",
-      error: err.message,
-    });
+    return res.json({ success: true, message: "Email sent" });
+  } catch (err) {
+    console.error("Subscribe Email Error:", err);
+    return res.status(500).json({ success: false, message: "Email failed" });
   }
 });
 
-// ------------------ User Trigger -------------------
+/* -------------------- Trigger One -------------------- */
 router.get("/trigger-one", authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.id;
@@ -47,26 +46,30 @@ router.get("/trigger-one", authMiddleware, async (req, res) => {
     const matched = await findMatchedJobsForPref(pref);
 
     if (!matched.length) {
-      return res.json({ success: false, message: "No matched jobs right now" });
+      return res.json({ success: false, message: "No matched jobs now" });
     }
 
-    const html = matched.slice(0, 5).map(j => `
-      <div>
-        <h3>${j.title}</h3>
-        <p>${j.organization} • ${j.location}</p>
-        <a href="${j.applyLink}">Apply</a>
-      </div>
-    `).join("");
+    const topJobs = matched.slice(0, 5).map(
+      j => `
+        <p>
+          <strong>${j.title}</strong><br/>
+          ${j.organization}<br/>
+          ${j.location}<br/>
+          Deadline: ${j.deadline}<br/>
+          <a href="${j.applyLink}" target="_blank">Apply</a>
+        </p>
+      `
+    ).join("");
 
     await sendMail(
       user.email,
-      "Your matched jobs — RozgarNow",
-      html
+      "Your Matched Jobs — RozgarNow",
+      `<h2>Your Job Matches</h2>${topJobs}`
     );
 
     return res.json({ success: true, sent: true });
-  } catch (err: any) {
-    console.error("Trigger ONE error:", err);
+  } catch (err) {
+    console.error("Trigger Error:", err);
     return res.status(500).json({ success: false });
   }
 });

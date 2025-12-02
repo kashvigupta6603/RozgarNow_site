@@ -1,30 +1,33 @@
-// src/services/emailService.ts
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,   // smtp-relay.brevo.com
-  port: Number(process.env.SMTP_PORT), // 587
-  secure: false, // BREVO uses TLS
+export const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER, // "apikey"
-    pass: process.env.SMTP_PASS, // Brevo SMTP key
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
-// Optional verify
-transporter.verify().then(() => {
-  console.log("✅ Brevo SMTP ready");
-}).catch(err => {
-  console.error("❌ Brevo SMTP ERROR:", err);
-});
+// optional verify
+transporter.verify()
+  .then(() => console.log("✅ SMTP Verified OK"))
+  .catch((err) => console.error("❌ SMTP Verify Failed:", err?.message, err));
 
 export async function sendMail(to: string, subject: string, html: string) {
-  const fromEmail = process.env.EMAIL_FROM;
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to,
+      subject,
+      html,
+    });
+    console.log("📨 Mail sent:", info.messageId);
+    return info;
+  } catch (err: any) {
+  console.error("❌ sendMail Error:", err?.message || err);
+  throw err;
+}
 
-  return transporter.sendMail({
-    from: fromEmail,
-    to,
-    subject,
-    html,
-  });
 }
