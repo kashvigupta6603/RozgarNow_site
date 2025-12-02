@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, GraduationCap, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calendar, MapPin, GraduationCap, Clock, BookOpenText } from "lucide-react";
 
 interface JobCardProps {
   id: string;
@@ -14,7 +13,8 @@ interface JobCardProps {
   category: string;
   vacancies: number;
   isNew?: boolean;
-  applyLink?: string | null; // 🔥 NEW
+  applyLink?: string | null;
+  syllabus?: string | null;
 }
 
 const JobCard = ({
@@ -27,7 +27,8 @@ const JobCard = ({
   category,
   vacancies,
   isNew = false,
-  applyLink, // 🔥 NEW
+  applyLink,
+  syllabus,
 }: JobCardProps) => {
   const deadlineDate = new Date(applicationDeadline);
   const today = new Date();
@@ -41,14 +42,9 @@ const JobCard = ({
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              {isNew && (
-                <Badge className="bg-accent hover:bg-accent-hover">New</Badge>
-              )}
-              <Badge variant="secondary" className="text-xs">
-                {category}
-              </Badge>
+              {isNew && <Badge className="bg-accent hover:bg-accent-hover">New</Badge>}
+              <Badge variant="secondary" className="text-xs">{category}</Badge>
             </div>
-
             <h3 className="font-semibold text-lg text-foreground leading-tight mb-1">
               {title}
             </h3>
@@ -77,9 +73,7 @@ const JobCard = ({
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center text-sm">
               <span className="text-muted-foreground">Vacancies:</span>
-              <span className="font-semibold text-primary ml-1">
-                {vacancies}
-              </span>
+              <span className="font-semibold text-primary ml-1">{vacancies}</span>
             </div>
 
             <div
@@ -100,13 +94,29 @@ const JobCard = ({
 
       <CardFooter className="pt-3">
         <div className="flex gap-2 w-full">
-          {/* 🔥 Apply Now = open external link in new tab */}
+
+          {/* Syllabus Link */}
+          {syllabus ? (
+            <a
+              href={syllabus}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex-1 ${applyLink ? "" : "w-full"}`}
+            >
+              <Button variant="outline" className="w-full">
+                <BookOpenText className="h-4 w-4" />
+                View Syllabus
+              </Button>
+            </a>
+          ) : null}
+
+          {/* Apply Link */}
           {applyLink ? (
             <a
               href={applyLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1"
+              className={`flex-1 ${syllabus ? "" : "w-full"}`}
             >
               <Button className="w-full bg-gradient-primary hover:bg-primary-hover">
                 Apply Now
@@ -114,7 +124,7 @@ const JobCard = ({
             </a>
           ) : (
             <Button
-              className="flex-1 bg-gradient-primary hover:bg-primary-hover"
+              className={`flex-1 ${syllabus ? "" : "w-full"}`}
               disabled
             >
               Apply Now

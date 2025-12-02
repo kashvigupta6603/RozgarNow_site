@@ -77,6 +77,7 @@ const MatchedJobs = () => {
               category={job.category}
               vacancies={job.vacancies}
               applyLink={job.applyLink} // 🔥 Important
+              syllabus={job.syllabus}
             />
           ))}
         </div>
