@@ -1,42 +1,65 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bell, Search, User, Menu, LogOut } from "lucide-react";
+import { Bell, Search, User, Menu, LogOut, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useJobAlerts } from "@/hooks/useJobAlerts";
 
+// Backend URL
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [token, setToken] = useState<string | null>(null);
 
+  const [token, setToken] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // --- CHECK TOKEN & FETCH USER STATUS
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     setToken(storedToken);
-  }, [location.pathname]); // update navbar when route changes
+    setIsAdmin(false);
 
-const handleLogout = () => {
-  localStorage.removeItem("token");
-  setToken(null);
-  toast.success("Logged out successfully!");
-  navigate("/");
-};
-const newJobs = useJobAlerts();
+    if (storedToken) {
+      fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.isAdmin) {
+            setIsAdmin(true);
+          }
+        })
+        .catch((err) => console.error("Error fetching user:", err));
+    }
+  }, [location.pathname]);
 
-useEffect(() => {
-  if (newJobs.length > 0) {
-    toast.success(`🔥 ${newJobs.length} new job(s) match your preferences!`, {
-      description: "Go to Matched Jobs to see details",
-      action: {
-        label: "View",
-        onClick: () => navigate("/matched-jobs"),
-      },
-    });
-  }
-}, [newJobs]);
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setIsAdmin(false);
+    toast.success("Logged out successfully!");
+    navigate("/");
+  };
 
+  const newJobs = useJobAlerts();
+
+  // Trigger toast when new jobs found
+  useEffect(() => {
+    if (newJobs.length > 0) {
+      toast.success(`🔥 ${newJobs.length} new job(s) match your preferences!`, {
+        description: "Go to Matched Jobs to see details",
+        action: {
+          label: "View",
+          onClick: () => navigate("/matched-jobs"),
+        },
+      });
+    }
+  }, [newJobs, navigate]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -45,7 +68,7 @@ useEffect(() => {
     { path: "/jobs", label: "Jobs" },
     { path: "/alerts", label: "Alerts" },
     { path: "/profile", label: "Profile" },
-    { path: "/about", label: "About" }
+    { path: "/about", label: "About" },
   ];
 
   return (
@@ -58,7 +81,7 @@ useEffect(() => {
             <div className="bg-gradient-primary p-2 rounded-lg">
               <Search className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-primary">RozgarNow</span>
+            <span className="text-xl font-bold text-primary">Vacantra</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -79,91 +102,85 @@ useEffect(() => {
           </div>
 
           {/* Desktop Actions */}
-<div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Admin Panel Button */}
+            {isAdmin && (
+              <Link to="/admin">
+                <Button variant="ghost" size="sm" className="flex items-center text-primary hover:bg-primary/10">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin
+                </Button>
+              </Link>
+            )}
 
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={async () => {
-    const token = localStorage.getItem("token");
+            {/* Trigger Alerts */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                if (!token) return alert("Please login to receive alerts");
 
-    if (!token) {
-      alert("Please login to receive alerts");
-      return;
-    }
+                try {
+                  const res = await fetch(
+                    `${API_BASE_URL}/api/alerts/trigger-one`,
+                    {
+                      method: "GET",
+                      headers: { Authorization: `Bearer ${token}` },
+                    }
+                  );
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/alerts/trigger-one`, {
+                  const data = await res.json();
 
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+                  if (data.sent) {
+                    alert("📩 Job alerts sent to your email!");
+                  } else {
+                    alert(data.message || "No matched jobs right now.");
+                  }
+                } catch {
+                  alert("Request failed");
+                }
+              }}
+            >
+              <Bell className="h-5 w-5" />
+            </Button>
 
-      const data = await res.json();
+            {/* If NOT logged in */}
+            {!token ? (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" size="sm" className="flex items-center">
+                    <User className="h-5 w-5 mr-2" />
+                    Login
+                  </Button>
+                </Link>
 
-      if (data.sent) {
-        alert("📩 Your job alerts were sent to your email!");
-      } else {
-        alert(data.message || "No jobs matched right now.");
-      }
-    } catch (err) {
-      alert("Request failed");
-    }
-  }}
->
-  <Bell className="h-5 w-5" />
-</Button>
+                <Link to="/register">
+                  <Button size="sm" className="bg-gradient-primary hover:bg-primary-hover">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/matched-jobs">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Search className="h-4 w-4" />
+                    Matched Jobs
+                  </Button>
+                </Link>
 
-
-
-  {/* If NOT logged in */}
-  {!token ? (
-    <>
-      <Link to="/login">
-        <Button variant="outline" size="sm" className="flex items-center">
-          <User className="h-5 w-5 mr-2" />
-          Login
-        </Button>
-      </Link>
-
-      <Link to="/register">
-        <Button
-          size="sm"
-          className="bg-gradient-primary hover:bg-primary-hover"
-        >
-          Get Started
-        </Button>
-      </Link>
-    </>
-  ) : (
-    <>
-      {/* 👉 ADD THIS BUTTON */}
-      <Link to="/matched-jobs">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <Search className="h-4 w-4" />
-          Matched Jobs
-        </Button>
-      </Link>
-
-      {/* logout button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="flex items-center"
-        onClick={handleLogout}
-      >
-        <LogOut className="h-5 w-5 mr-2" />
-        Logout
-      </Button>
-    </>
-  )}
-</div>
-
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center"
+                >
+                  <LogOut className="h-5 w-5 mr-2" />
+                  Logout
+                </Button>
+              </>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <Button
