@@ -10,6 +10,7 @@ import preferenceRoutes from "./routes/preferenceRoutes";
 import alertRoutes from "./routes/alertRoutes";
 import adminRoutes from "./routes/adminRoutes";
 
+
 import cron from "node-cron";
 import fetch from "node-fetch";
 
@@ -48,6 +49,7 @@ app.use("/api/preferences", preferenceRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/admin", adminRoutes);
+
 
 // Test route
 app.get("/", (req, res) => {
